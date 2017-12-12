@@ -110,7 +110,7 @@ class EC2Provider(ExecutionProvider):
         self.logger = logger
 
     def read_state_file(self):
-        """If this script has been run previously, it will be persisitent
+        """If this script has been run previously, it will be persistent
         by writing resource ids to state file. On run, the script looks for a state file
         before creating new infrastructure"""
         try:
@@ -154,7 +154,7 @@ class EC2Provider(ExecutionProvider):
         it will check for a ~/.aws/credentials file and use that.
         If not found, it will look for environment variables containing aws auth
         information. If none of those options work, it will let boto attempt to
-        figure out who you are. if that fails, we cannot proceed"""
+        figure out who you are. If that fails, we cannot proceed"""
         if 'ec2credentialsfile' in config:
             config['ec2credentialsfile'] = os.path.expanduser(
                 config['ec2credentialsfile'])
@@ -339,8 +339,8 @@ class EC2Provider(ExecutionProvider):
         return instance
 
     def shut_down_instance(self, instances=None):
-        """Shuts down a list of instances if provided or the last
-        instance started up if none provided"""
+        """Shuts down a list of instances, if provided, or the last
+        instance started up, if none provided"""
         if instances and len(self.instances > 0):
             term = self.client.terminate_instances(InstanceIds=instances)
             self.logger.info(
@@ -357,7 +357,7 @@ class EC2Provider(ExecutionProvider):
         return term
 
     def get_instance_state(self, instances=None):
-        """Get stateus of all instances on EC2 which were started by this
+        """Get states of all instances on EC2 which were started by this
         file"""
         if instances:
             desc = self.client.describe_instances(InstanceIds=instances)
@@ -378,7 +378,7 @@ class EC2Provider(ExecutionProvider):
         except Exception as e:
             self.logger.error(e)
             self.logger.info(
-                "Couldn't find user ipyparallel config file. Trying default location.")
+                "Couldn't find user iPyParallel config file. Trying default location.")
             with open(os.path.expanduser("~/.ipython/profile_default/security/ipcontroller-engine.json")) as f:
                 config = f.read().strip()
         else:
@@ -412,7 +412,7 @@ ipengine --file=ipengine.json &> ipengine.log &""".format(config)
     # Submit
     ########################################################
     def submit(self, cmd_string='sleep 1', blocksize=1, job_name="parsl.auto"):
-        """Submit an ipyparalel pilot job which will connect to an ipp controller specified
+        """Submit an iPyParallel pilot job which will connect to an ipp controller specified
         by your ipp config file and run cmd_string on the instance being started up."""
         return self.scale_out(cmd_string=cmd_string, size=blocksize)
 
@@ -449,7 +449,7 @@ ipengine --file=ipengine.json &> ipengine.log &""".format(config)
 
     def teardown(self):
         """Terminate all EC2 instances, delete all subnets,
-        delete security group, delete vpc
+        delete security group, delete vpc,
         and reset all instance variables
         """
         self.shut_down_instance(self.instances)
