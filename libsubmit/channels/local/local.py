@@ -82,18 +82,17 @@ class LocalChannel (Channel):
 
         return (retcode, stdout.decode("utf-8"), stderr.decode("utf-8"))
 
-    def execute_no_wait (self, cmd, walltime):
+    def execute_no_wait (self, cmd, walltime=5):
         ''' Synchronously execute a commandline string on the shell.
 
         Args:
             - cmd (string) : Commandline string to execute
-            - walltime (int) : walltime in seconds, this is not really used now.
+
+        Kwargs:
+            - walltime (int): Default 5
 
         Returns:
-
-           - retcode : Return code from the execution, -1 on fail
-           - stdout  : stdout string
-           - stderr  : stderr string
+           - Proc (handle)
 
         Raises:
          None.
@@ -114,7 +113,59 @@ class LocalChannel (Channel):
             print("Caught exception : {0}".format(e))
             logger.warn("Execution of command [%s] failed due to \n %s ",  (cmd, e))
 
-        return pid, proc
+        return proc
+
+    def poll_handle(self, handle):
+        ''' Poll a handle from an asynchronous execution and returns
+        status of the execution initiated by execute_no_wait
+
+        Args:
+            - handle (handle object): Handle to non-blocking execution
+
+        Returns:
+
+            - Status (Bool)
+        '''
+        returncode = handle.poll()
+
+        if returncode == None:
+            return False
+        else:
+            return True
+
+    def result(self, handle, walltime=5):
+        ''' Blocking call that returns the result of an asynchrous execution
+        identified by the handle.
+
+        Args:
+           - handle (handle object)
+
+        KWargs:
+           - walltime (int): Max wait time for the process
+
+        Returns:
+            - (exit_code, stdout, stderr) (int, string, string)
+        '''
+        retcode = -1
+        stdout  = None
+        stderr  = None
+        proc    = handle
+        
+        try:
+            proc.wait(timeout=walltime)
+            stdout = proc.stdout.read()
+            stderr = proc.stderr.read()
+            retcode = proc.returncode
+
+        except Exception as e:
+            print("Caught exception : {0}".format(e))
+            logger.warn("Execution of command [%s] failed due to \n %s ",  (cmd, e))
+            # Set retcode to non-zero so that this can be handled in the provider.
+            if retcode == 0:
+                retcode = -1
+                return (recode, None, None)
+
+        return (retcode, stdout.decode("utf-8"), stderr.decode("utf-8"))
 
     def push_file(self, source, dest_dir):
         ''' If the source files dirpath is the same as dest_dir, a copy

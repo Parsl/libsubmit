@@ -95,18 +95,18 @@ class SshChannel ():
         return  exit_status, stdout.read().decode("utf-8"), stderr.read().decode("utf-8")
 
 
-    def execute_no_wait(self, cmd, walltime=2, envs={}):
+    def execute_no_wait(self, cmd, walltime=10, envs={}):
         ''' Execute asynchronousely without waiting for exitcode
 
         Args:
             - cmd (string): Commandline string to be executed on the remote side
-            - walltime (int): timeout to exec_command
 
         KWargs:
+            - walltime (int): Default 5
             - envs (dict): A dictionary of env variables
 
         Returns:
-            - None, stdout (readable stream), stderr (readable stream)
+            - Handle (stdout, stderr tuple)
 
         Raises:
             - ChannelExecFailed (reason)
@@ -117,7 +117,38 @@ class SshChannel ():
                                                              bufsize=-1,
                                                              timeout=walltime)
         # Block on exit status from the command
-        return  None, stdout, stderr
+        return  (stdout, stderr)
+
+    def poll_handle(self, handle):
+        ''' Poll a handle from an asynchronous execution and returns
+        status of the execution initiated by execute_no_wait
+
+        Args:
+            - handle (handle object): Handle to non-blocking execution
+
+        Returns:
+
+            - Status (Bool)
+        '''
+        stdout, stderr = handle
+        if stdout.channel.exit_status_ready():
+            return True
+        else:
+            return False
+
+    def result(self, handle):
+        ''' Blocking call that returns the result of an asynchrous execution
+        identified by the handle.
+
+        Args:
+           - handle (handle object)
+
+        Returns:
+            - (exit_code, stdout, stderr) (int, string, string)
+        '''
+        stdout, stderr = handle
+        exit_status = stdout.channel.recv_exit_status()
+        return  exit_status, stdout.read().decode("utf-8"), stderr.read().decode("utf-8")
 
     def push_file(self, local_source, remote_dir):
         ''' Transport a local file to a directory on a remote machine

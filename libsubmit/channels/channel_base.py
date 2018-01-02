@@ -51,15 +51,45 @@ class Channel (metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def execute_no_wait(self, cmd, walltime, *args, **kwargs):
+    def execute_no_wait(self, cmd, *args, walltime=5, **kwargs):
         ''' Optional. THis is infrequently used.
 
         Args:
             - cmd (string): Command string to execute over the channel
-            - walltime (int) : Timeout in seconds
+
+        Kwargs:
+            - walltime (int): Walltime for the async command, default=5
 
         Returns:
-            - (exit_code(None), stdout, stderr) (int, io_thing, io_thing)
+            - Handle (handle object)
+        '''
+        pass
+
+    @abstractmethod
+    def poll_handle(self, handle):
+        ''' Poll a handle from an asynchronous execution and returns
+        status of the execution initiated by execute_no_wait
+
+        Args:
+            - handle (handle object): Handle to non-blocking execution
+
+        Returns:
+
+            - Status (Bool)
+        '''
+        pass
+
+
+    @abstractmethod
+    def result(self, handle):
+        ''' Blocking call that returns the result of an asynchrous execution
+        identified by the handle.
+
+        Args:
+           - handle (handle object)
+
+        Returns:
+            - (exit_code, stdout, stderr) (int, string, string)
         '''
         pass
 
