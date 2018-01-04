@@ -6,6 +6,7 @@ import time
 from string import Template
 from libsubmit.providers.provider_base import ExecutionProvider
 from libsubmit.providers.torque.template import template_string
+from libsubmit.launchers import Launchers
 
 import libsubmit.error as ep_error
 
@@ -283,6 +284,12 @@ class Torque(ExecutionProvider):
         job_config["walltime"] = self.config["execution"]["block"].get("walltime", "00:20:00")
         job_config["overrides"] = job_config.get("overrides", '')
         job_config["user_script"] = cmd_string
+
+        # Wrap the cmd_string
+        lname = self.config["execution"]["block"].get("launcher", "singleNode")
+        launcher = Launchers.get(lname, None)
+        job_config["user_script"] = launcher(cmd_string,
+                                             taskBlocks=job_config["taskBlocks"])
 
         logger.debug("Writing submit script")
         ret = self._write_submit_script(template_string, script_path, job_name, job_config)

@@ -7,7 +7,6 @@ template_string = '''#!/bin/bash
 #PBS -l walltime=$walltime
 #PBS -o ${submit_script_dir}/${jobname}.submit.stdout
 #PBS -e ${submit_script_dir}/${jobname}.submit.stderr
-#PBS -v WORKER_LOGGING_LEVEL
 ${overrides}
 
 export JOBNAME="${jobname}"
