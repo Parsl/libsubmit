@@ -33,7 +33,7 @@ class SshChannel ():
         KWargs:
             - username (string) : Username on remote system
             - password (string) : Password for remote system
-            - channel_script_dir (string) : Full path to a script dir where
+            - scriptDir (string) : Full path to a script dir where
               generated scripts could be sent to.
 
         Raises:

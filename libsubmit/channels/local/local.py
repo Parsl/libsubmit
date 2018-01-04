@@ -23,7 +23,7 @@ class LocalChannel (Channel):
         KwArgs:
             - userhome (string): (default='.') This is provided as a way to override and set a specific userhome
             - envs (dict) : A dictionary of env variables to be set when launching the shell
-            - channel_script_dir (string): (default="./.scripts") Directory to place scripts
+            - scriptDir (string): (default="./.scripts") Directory to place scripts
         '''
 
         self.userhome = os.path.abspath(userhome)
