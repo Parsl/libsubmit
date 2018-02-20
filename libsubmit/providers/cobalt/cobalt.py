@@ -12,11 +12,11 @@ import libsubmit.error as ep_error
 
 logger = logging.getLogger(__name__)
 
-translate_table = { 'queued'  :  'PENDING',
-                    'starting' : 'PENDING',
-                    'running' :  'RUNNING',
-                    'exiting' : 'COMPLETED',
-                    'killing' : 'COMPLETED'
+translate_table = { 'QUEUED'  :  'PENDING',
+                    'STARTING' : 'PENDING',
+                    'RUNNING' :  'RUNNING',
+                    'EXITING' : 'COMPLETED',
+                    'KILLING' : 'COMPLETED'
                   } # (special exit state
 
 
@@ -176,7 +176,6 @@ class Cobalt(ExecutionProvider):
             parts = line.upper().split()
             if parts and parts[0] != 'JOBID':
                 job_id = parts[0]
-                print(parts)
 
                 if job_id not in self.resources : continue
 
@@ -185,13 +184,11 @@ class Cobalt(ExecutionProvider):
                 self.resources[job_id]['status'] = status
                 jobs_missing.remove(job_id)
 
-        print("Jobs list : " , self.resources)
-
         # squeue does not report on jobs that are not running. So we are filling in the
         # blanks for missing jobs, we might lose some information about why the jobs failed.
         for missing_job in jobs_missing:
-            if self.resources[missing_job]['status'] in ['running', 'killing', 'exiting']:
-                self.resources[missing_job]['status'] = translate_table['exiting']
+            if self.resources[missing_job]['status'] in ['RUNNING', 'KILLING', 'EXITING']:
+                self.resources[missing_job]['status'] = translate_table['EXITING']
 
     def status (self, job_ids):
         '''  Get the status of a list of jobs identified by their ids.
