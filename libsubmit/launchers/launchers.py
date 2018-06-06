@@ -1,4 +1,4 @@
-def singleNodeLauncher(cmd_string, taskBlocks, walltime=None):
+def singleNodeLauncher(cmd_string, taskBlocks, walltime=None, launcher_opts=''):
     ''' Worker launcher that wraps the user's cmd_string with the framework to
     launch multiple cmd_string invocations in parallel. This wrapper sets the
     bash env variable CORES to the number of cores on the machine. By setting
@@ -32,7 +32,7 @@ echo "All workers done"
     return x
 
 
-def srunLauncher(cmd_string, taskBlocks, walltime=None):
+def srunLauncher(cmd_string, taskBlocks, walltime=None, launcher_opts=''):
     ''' Worker launcher that wraps the user's cmd_string with the SRUN launch framework
     to launch multiple cmd invocations in parallel on a single job allocation.
 
@@ -58,14 +58,14 @@ chmod a+x cmd_$SLURM_JOB_NAME.sh
 
 TASKBLOCKS={1}
 
-srun --ntasks $TASKBLOCKS -l bash cmd_$SLURM_JOB_NAME.sh
+srun --ntasks $TASKBLOCKS -l {2} bash cmd_$SLURM_JOB_NAME.sh
 
 echo "Done"
-'''.format(cmd_string, taskBlocks)
+'''.format(cmd_string, taskBlocks, launcher_opts)
     return x
 
 
-def srunMpiLauncher(cmd_string, taskBlocks, walltime=None):
+def srunMpiLauncher(cmd_string, taskBlocks, walltime=None, launcher_opts=''):
     ''' Worker launcher that wraps the user's cmd_string with the SRUN launch framework
     to launch multiple cmd invocations in parallel on a single job allocation.
 
@@ -98,7 +98,7 @@ then
     CORES_PER_BLOCK=$(($NODES * $CORES / $TASKBLOCKS))
     for blk in $(seq 1 1 $TASKBLOCKS):
     do
-        srun --ntasks $CORES_PER_BLOCK -l bash cmd_$SLURM_JOB_NAME.sh &
+        srun --ntasks $CORES_PER_BLOCK -l {2} bash cmd_$SLURM_JOB_NAME.sh &
     done
     wait
 else
@@ -107,7 +107,7 @@ else
     NODES_PER_BLOCK=$(( $NODES / $TASKBLOCKS ))
     for blk in $(seq 1 1 $TASKBLOCKS):
     do
-        srun --exclusive --nodes $NODES_PER_BLOCK -l bash cmd_$SLURM_JOB_NAME.sh &
+        srun --exclusive --nodes $NODES_PER_BLOCK -l {2} bash cmd_$SLURM_JOB_NAME.sh &
     done
     wait
 
@@ -115,11 +115,11 @@ fi
 
 
 echo "Done"
-'''.format(cmd_string, taskBlocks)
+'''.format(cmd_string, taskBlocks, launcher_opts)
     return x
 
 
-def aprunLauncher(cmd_string, taskBlocks, walltime=None):
+def aprunLauncher(cmd_string, taskBlocks, walltime=None, launcher_opts=''):
     ''' Worker launcher that wraps the user's cmd_string with the Aprun launch framework
     to launch multiple cmd invocations in parallel on a single job allocation.
 
@@ -143,10 +143,10 @@ TASKBLOCKS={1}
 
 for i in $(seq 1 1 $TASKBLOCKS):
 do
-    aprun /bin/bash cmd_$JOBNAME.sh &
+    aprun {2} /bin/bash cmd_$JOBNAME.sh &
 done
 wait
 
 echo "Done"
-'''.format(cmd_string, taskBlocks)
+'''.format(cmd_string, taskBlocks, override_options)
     return x
