@@ -21,7 +21,7 @@ translate_table = {
 }  # Suspended
 
 
-class Torque(ExecutionProvider):
+class Torque(ClusterProvider):
     ''' Torque Execution Provider
 
     This provider uses sbatch to submit, squeue for status, and scancel to cancel
@@ -119,6 +119,8 @@ class Torque(ExecutionProvider):
              - Channel (None): A channel is required for torque.
         '''
 
+        super().__init__(config, channel=channel)
+        return
         self.channel = channel
         if self.channel is None:
             logger.error("Provider:Torque cannot be initialized without a channel")
@@ -134,11 +136,6 @@ class Torque(ExecutionProvider):
         # Dictionary that keeps track of jobs, keyed on job_id
         self.resources = {}
 
-    @property
-    def channels_required(self):
-        ''' Returns Bool on whether a channel is required
-        '''
-        return True
 
     def _status(self):
         ''' Internal: Do not call. Returns the status list for a list of job_ids
@@ -151,10 +148,15 @@ class Torque(ExecutionProvider):
         '''
 
         job_id_list = ' '.join(self.resources.keys())
+        cmd = "qstat {0}".format(job_id_list)
+
+        retcode, stdout, stderr = super().execute_wait(cmd)
+
+        # Execute_wait failed. Do no update
+        if retcode != 0:
+            return
 
         jobs_missing = list(self.resources.keys())
-
-        retcode, stdout, stderr = self.channel.execute_wait("qstat {0}".format(job_id_list), 3)
         for line in stdout.split('\n'):
             parts = line.split()
             if not parts or parts[0].upper().startswith('JOB') or parts[0].startswith('---'):
@@ -171,52 +173,6 @@ class Torque(ExecutionProvider):
             if self.resources[missing_job]['status'] in ['PENDING', 'RUNNING']:
                 self.resources[missing_job]['status'] = translate_table['E']
 
-    def status(self, job_ids):
-        '''  Get the status of a list of jobs identified by their ids.
-
-        Args:
-            - job_ids (List of ids) : List of identifiers for the jobs
-
-        Returns:
-            - List of status codes.
-
-        '''
-        self._status()
-        return [self.resources[jid]['status'] for jid in job_ids]
-
-    def _write_submit_script(self, template_string, script_filename, job_name, configs):
-        '''
-        Load the template string with config values and write the generated submit script to
-        a submit script file.
-
-        Args:
-              - template_string (string) : The template string to be used for the writing submit script
-              - script_filename (string) : Name of the submit script
-              - job_name (string) : job name
-              - configs (dict) : configs that get pushed into the template
-
-        Returns:
-              - True: on success
-
-        Raises:
-              SchedulerMissingArgs : If template is missing args
-              ScriptPathError : Unable to write submit script out
-        '''
-
-        try:
-            submit_script = Template(template_string).substitute(jobname=job_name, **configs)
-            with open(script_filename, 'w') as f:
-                f.write(submit_script)
-
-        except KeyError as e:
-            logger.error("Missing keys for submit script : %s", e)
-            raise (ep_error.SchedulerMissingArgs(e.args, self.sitename))
-
-        except IOError as e:
-            logger.error("Failed writing to submit script: %s", script_filename)
-            raise (ep_error.ScriptPathError(script_filename, e))
-
-        return True
 
     def submit(self, cmd_string, blocksize, job_name="parsl.auto"):
         ''' Submits the cmd_string onto an Local Resource Manager job of blocksize parallel elements.
@@ -275,6 +231,7 @@ class Torque(ExecutionProvider):
         job_config["overrides"] = job_config.get("overrides", '')
         job_config["user_script"] = cmd_string
 
+        # Wrap the cmd_string
         logger.debug("Writing submit script")
         self._write_submit_script(template_string, script_path, job_name, job_config)
 
@@ -321,22 +278,6 @@ class Torque(ExecutionProvider):
             rets = [False for i in job_ids]
 
         return rets
-
-    @property
-    def scaling_enabled(self):
-        return True
-
-    @property
-    def current_capacity(self):
-        ''' Returns the current blocksize.
-        This may need to return more information in the futures :
-        { minsize, maxsize, current_requested }
-        '''
-        return self.current_blocksize
-
-    def _test_add_resource(self, job_id):
-        self.resources.extend([{'job_id': job_id, 'status': 'PENDING', 'size': 1}])
-        return True
 
 
 if __name__ == "__main__":
