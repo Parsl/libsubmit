@@ -4,7 +4,7 @@ import time
 from string import Template
 
 import libsubmit.error as ep_error
-from libsubmit.providers.provider_base import ExecutionProvider
+from libsubmit.providers.cluster_provider import ClusterProvider
 from libsubmit.providers.torque.template import template_string
 
 logger = logging.getLogger(__name__)
