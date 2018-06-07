@@ -1,7 +1,6 @@
 import logging
 import os
 import time
-from string import Template
 
 import libsubmit.error as ep_error
 from libsubmit.providers.cluster_provider import ClusterProvider
@@ -16,7 +15,8 @@ translate_table = {
     'E': 'COMPLETED',  # Exiting after having run
     'H': 'HELD',  # Held
     'Q': 'PENDING',  # Queued, and eligible to run
-    'W': 'PENDING',  # Job is waiting for it's execution time (-a option) to be reached
+    # Job is waiting for it's execution time (-a option) to be reached
+    'W': 'PENDING',
     'S': 'HELD'
 }  # Suspended
 
@@ -123,8 +123,10 @@ class Torque(ClusterProvider):
         return
         self.channel = channel
         if self.channel is None:
-            logger.error("Provider:Torque cannot be initialized without a channel")
-            raise (ep_error.ChannelRequired(self.__class__.__name__, "Missing a channel to execute commands"))
+            logger.error(
+                "Provider:Torque cannot be initialized without a channel")
+            raise (ep_error.ChannelRequired(self.__class__.__name__,
+                                            "Missing a channel to execute commands"))
         self.config = config
         self.sitename = config['site']
         self.current_blocksize = 0
@@ -135,7 +137,6 @@ class Torque(ClusterProvider):
 
         # Dictionary that keeps track of jobs, keyed on job_id
         self.resources = {}
-
 
     def _status(self):
         ''' Internal: Do not call. Returns the status list for a list of job_ids
@@ -173,7 +174,6 @@ class Torque(ClusterProvider):
             if self.resources[missing_job]['status'] in ['PENDING', 'RUNNING']:
                 self.resources[missing_job]['status'] = translate_table['E']
 
-
     def submit(self, cmd_string, blocksize, job_name="parsl.auto"):
         ''' Submits the cmd_string onto an Local Resource Manager job of blocksize parallel elements.
         Submit returns an ID that corresponds to the task that was just submitted.
@@ -200,7 +200,8 @@ class Torque(ClusterProvider):
         '''
 
         if self.current_blocksize >= self.config["execution"]["block"].get("maxBlocks", 2):
-            logger.warn("[%s] at capacity, cannot add more blocks now", self.sitename)
+            logger.warn(
+                "[%s] at capacity, cannot add more blocks now", self.sitename)
             return None
 
         # Note: Fix this later to avoid confusing behavior.
@@ -224,28 +225,36 @@ class Torque(ClusterProvider):
         # TODO : script_path might need to change to accommodate script dir set via channels
         job_config["submit_script_dir"] = self.channel.script_dir
         job_config["nodes"] = nodes
-        job_config["taskBlocks"] = self.config["execution"]["block"].get("taskBlocks", 1)
-        job_config["account"] = self.config["execution"]["block"]["options"].get("account", '')
-        job_config["queue"] = self.config["execution"]["block"]["options"].get("queue", '')
-        job_config["walltime"] = self.config["execution"]["block"].get("walltime", "00:20:00")
+        job_config["taskBlocks"] = self.config["execution"]["block"].get(
+            "taskBlocks", 1)
+        job_config["account"] = self.config["execution"]["block"]["options"].get(
+            "account", '')
+        job_config["queue"] = self.config["execution"]["block"]["options"].get(
+            "queue", '')
+        job_config["walltime"] = self.config["execution"]["block"].get(
+            "walltime", "00:20:00")
         job_config["overrides"] = job_config.get("overrides", '')
         job_config["user_script"] = cmd_string
 
         # Wrap the cmd_string
-        job_config["user_script"] = self.launcher(cmd_string, 
+        job_config["user_script"] = self.launcher(cmd_string,
                                                   taskBlocks=job_config["taskBlocks"],
                                                   launcher_opts=self.launcher_opts)
 
         logger.debug("Writing submit script")
-        self._write_submit_script(template_string, script_path, job_name, job_config)
+        self._write_submit_script(
+            template_string, script_path, job_name, job_config)
 
-        channel_script_path = self.channel.push_file(script_path, self.channel.script_dir)
+        channel_script_path = self.channel.push_file(
+            script_path, self.channel.script_dir)
 
         submit_options = ''
         if job_config["queue"]:
-            submit_options = '{0} -q {1}'.format(submit_options, job_config["queue"])
+            submit_options = '{0} -q {1}'.format(
+                submit_options, job_config["queue"])
         if job_config["account"]:
-            submit_options = '{0} -A {1}'.format(submit_options, job_config["account"])
+            submit_options = '{0} -A {1}'.format(
+                submit_options, job_config["account"])
 
         launch_cmd = "qsub {0} {1}".format(submit_options, channel_script_path)
         retcode, stdout, stderr = self.channel.execute_wait(launch_cmd, 3)
@@ -255,9 +264,11 @@ class Torque(ClusterProvider):
             for line in stdout.split('\n'):
                 if line.strip():
                     job_id = line.strip()
-                    self.resources[job_id] = {'job_id': job_id, 'status': 'PENDING', 'blocksize': blocksize}
+                    self.resources[job_id] = {
+                        'job_id': job_id, 'status': 'PENDING', 'blocksize': blocksize}
         else:
-            logger.error("Retcode:%s STDOUT:%s STDERR:%s", retcode, stdout.strip(), stderr.strip())
+            logger.error("Retcode:%s STDOUT:%s STDERR:%s",
+                         retcode, stdout.strip(), stderr.strip())
 
         return job_id
 
@@ -272,11 +283,13 @@ class Torque(ClusterProvider):
         '''
 
         job_id_list = ' '.join(job_ids)
-        retcode, stdout, stderr = self.channel.execute_wait("qdel {0}".format(job_id_list), 3)
+        retcode, stdout, stderr = self.channel.execute_wait(
+            "qdel {0}".format(job_id_list), 3)
         rets = None
         if retcode == 0:
             for jid in job_ids:
-                self.resources[jid]['status'] = translate_table['E']  # Setting state to exiting
+                # Setting state to exiting
+                self.resources[jid]['status'] = translate_table['E']
             rets = [True for i in job_ids]
         else:
             rets = [False for i in job_ids]

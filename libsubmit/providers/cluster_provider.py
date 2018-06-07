@@ -49,18 +49,19 @@ class ClusterProvider(ExecutionProvider):
         self.channel = channel
         if self.channel is None:
             logger.error("Provider: Cannot be initialized without a channel")
-            raise (ep_error.ChannelRequired(self.__class__.__name__, "Missing a channel to execute commands"))
+            raise (ep_error.ChannelRequired(self.__class__.__name__,
+                                            "Missing a channel to execute commands"))
         self.config = config
         self.sitename = config['site']
         self.current_blocksize = 0
-        launcher_name = self.config["execution"]["block"].get("launcher", "singleNode")
-        self.launcher_opts = self.config["execution"]["block"].get("launcher_opts", '')
-        print("*"*100)
-        print("Using launcher:", launcher_name)
-        print("Using launcher_opts:", self.launcher_opts)
-        print("*"*100)
+        launcher_name = self.config["execution"]["block"].get(
+            "launcher", "singleNode")
+        self.launcher_opts = self.config["execution"]["block"].get(
+            "launcher_opts", '')
+
         self.launcher = Launchers.get(launcher_name, None)
-        self.max_walltime = wtime_to_minutes(self.config["execution"]["block"].get("walltime", '01:00:00'))
+        self.max_walltime = wtime_to_minutes(
+            self.config["execution"]["block"].get("walltime", '01:00:00'))
 
         self.scriptDir = self.config["execution"]["scriptDir"]
         if not os.path.exists(self.scriptDir):
@@ -93,8 +94,8 @@ class ClusterProvider(ExecutionProvider):
         job_config["walltime"] = self.config["execution"]["block"]["walltime"]
         job_config["overrides"] = job_config.get("overrides", '')
         job_config["user_script"] = cmd_string
-        job_config["user_script"] = self.launcher(cmd_string, 
-                                                  taskBlocks=job_config["taskBlocks"], 
+        job_config["user_script"] = self.launcher(cmd_string,
+                                                  taskBlocks=job_config["taskBlocks"],
                                                   launcher_opts=self.launcher_opts)
         return job_config
 
@@ -118,7 +119,8 @@ class ClusterProvider(ExecutionProvider):
         '''
 
         try:
-            submit_script = Template(template_string).substitute(jobname=job_name, **configs)
+            submit_script = Template(template_string).substitute(
+                jobname=job_name, **configs)
             # submit_script = Template(template_string).safe_substitute(jobname=job_name, **configs)
             with open(script_filename, 'w') as f:
                 f.write(submit_script)
@@ -128,7 +130,8 @@ class ClusterProvider(ExecutionProvider):
             raise (ep_error.SchedulerMissingArgs(e.args, self.sitename))
 
         except IOError as e:
-            logger.error("Failed writing to submit script: %s", script_filename)
+            logger.error("Failed writing to submit script: %s",
+                         script_filename)
             raise (ep_error.ScriptPathError(script_filename, e))
         except Exception as e:
             print("Template : ", template_string)
