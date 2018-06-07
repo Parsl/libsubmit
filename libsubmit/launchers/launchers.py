@@ -148,5 +148,5 @@ done
 wait
 
 echo "Done"
-'''.format(cmd_string, taskBlocks, override_options)
+'''.format(cmd_string, taskBlocks, launcher_opts)
     return x

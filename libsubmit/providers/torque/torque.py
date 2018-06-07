@@ -232,6 +232,10 @@ class Torque(ClusterProvider):
         job_config["user_script"] = cmd_string
 
         # Wrap the cmd_string
+        job_config["user_script"] = self.launcher(cmd_string, 
+                                                  taskBlocks=job_config["taskBlocks"],
+                                                  launcher_opts=self.launcher_opts)
+
         logger.debug("Writing submit script")
         self._write_submit_script(template_string, script_path, job_name, job_config)
 

@@ -55,6 +55,10 @@ class ClusterProvider(ExecutionProvider):
         self.current_blocksize = 0
         launcher_name = self.config["execution"]["block"].get("launcher", "singleNode")
         self.launcher_opts = self.config["execution"]["block"].get("launcher_opts", '')
+        print("*"*100)
+        print("Using launcher:", launcher_name)
+        print("Using launcher_opts:", self.launcher_opts)
+        print("*"*100)
         self.launcher = Launchers.get(launcher_name, None)
         self.max_walltime = wtime_to_minutes(self.config["execution"]["block"].get("walltime", '01:00:00'))
 
@@ -89,7 +93,9 @@ class ClusterProvider(ExecutionProvider):
         job_config["walltime"] = self.config["execution"]["block"]["walltime"]
         job_config["overrides"] = job_config.get("overrides", '')
         job_config["user_script"] = cmd_string
-        job_config["user_script"] = self.launcher(cmd_string, taskBlocks=job_config["taskBlocks"], self.launcher_opts)
+        job_config["user_script"] = self.launcher(cmd_string, 
+                                                  taskBlocks=job_config["taskBlocks"], 
+                                                  launcher_opts=self.launcher_opts)
         return job_config
 
     def _write_submit_script(self, template_string, script_filename, job_name, configs):
