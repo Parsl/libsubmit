@@ -119,7 +119,7 @@ echo "Done"
     return x
 
 
-def aprunLauncher(cmd_string, taskBlocks, walltime=None):
+def aprunLauncher(cmd_string, taskBlocks, nodes=1, walltime=None):
     ''' Worker launcher that wraps the user's cmd_string with the Aprun launch framework
     to launch multiple cmd invocations in parallel on a single job allocation.
 
@@ -131,22 +131,39 @@ def aprunLauncher(cmd_string, taskBlocks, walltime=None):
         - walltime (int) : This is not used by this launcher.
     '''
 
-    x = '''
+    if taskBlocks >= nodes:
+        tasks_per_node = int(taskBlocks/nodes)
+        x = '''
 WORKERCOUNT={1}
-
+        
 cat << APRUN_EOF > cmd_$JOBNAME.sh
 {0}
 APRUN_EOF
 chmod a+x cmd_$JOBNAME.sh
 
 TASKBLOCKS={1}
+TASKS_PER_NODE={2}
+aprun -n $TASKBLOCKS -N $TASKS_PER_NODE /bin/bash cmd_$JOBNAME.sh 
 
-for i in $(seq 1 1 $TASKBLOCKS):
+echo "Done"
+'''.format(cmd_string, taskBlocks, tasks_per_node)
+        return x
+
+    else:
+        x = '''
+WORKERCOUNT={1}
+        
+cat << APRUN_EOF > cmd_$JOBNAME.sh
+{0}
+APRUN_EOF
+chmod a+x cmd_$JOBNAME.sh
+
+TASKBLOCKS={1}
+for blk in $(seq 1 1 $TASKBLOCKS):
 do
     aprun /bin/bash cmd_$JOBNAME.sh &
 done
 wait
-
 echo "Done"
 '''.format(cmd_string, taskBlocks)
-    return x
+        return x

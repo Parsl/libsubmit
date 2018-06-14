@@ -313,7 +313,7 @@ class Cobalt(ExecutionProvider):
         # Wrap the cmd_string
         lname = self.config["execution"]["block"].get("launcher", "singleNode")
         launcher = Launchers.get(lname, None)
-        job_config["user_script"] = launcher(cmd_string, job_config["taskBlocks"])
+        job_config["user_script"] = launcher(cmd_string, job_config["taskBlocks"], nodes=nodes)
 
         # Get queue request if requested
         self.queue = ''
@@ -331,7 +331,7 @@ class Cobalt(ExecutionProvider):
         cmd_string = "qsub -n {0} {1} -t {2} {3} {4}".format(nodes, self.queue, self.max_walltime, account_opt,
                                                              channel_script_path)
 
-        retcode, stdout, stderr = self.channel.execute_wait(cmd_string, 10)
+        retcode, stdout, stderr = self.channel.execute_wait(cmd_string, 60)
 
         # TODO : FIX this block
         if retcode != 0:
