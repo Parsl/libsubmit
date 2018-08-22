@@ -24,9 +24,9 @@ class KubernetesProvider(ExecutionProvider, RepresentationMixin):
     ----------
 
     namespace : str
-        FIXME
+        Kubernetes namespace to create deployments.
     image : str
-        FIXME
+        Docker image to use in the deployment.
     channel : Channel
         Channel for accessing this provider. Possible channels include
         :class:`~libsubmit.channels.LocalChannel` (the default),
@@ -47,18 +47,18 @@ class KubernetesProvider(ExecutionProvider, RepresentationMixin):
         scaling where as many resources as possible are used; parallelism close to 0 represents
         the opposite situation in which as few resources as possible (i.e., min_blocks) are used.
     secret : str
-        FIXME
+        Docker secret to use to pull images
     user_id : str
-        FIXME
+        Unix user id to run the container as.
     group_id : str
-        FIXME
-    run_as_non_root : str
-        FIXME
+        Unix group id to run the container as.
+    run_as_non_root : bool
+        Run as non-root (True) or run as root (False).
     """
 
     def __init__(self,
-                 namespace,
                  image,
+                 namespace='default',
                  channel=LocalChannel(),
                  tasks_per_node=1,
                  nodes_per_block=1,
@@ -66,7 +66,9 @@ class KubernetesProvider(ExecutionProvider, RepresentationMixin):
                  min_blocks=0,
                  max_blocks=10,
                  parallelism=1,
-                 security=None,
+                 user_id=None,
+                 group_id=None,
+                 run_as_non_root=False,
                  secret=None):
         if not _kubernetes_enabled:
             raise OptionalModuleMissing(['kubernetes'],
@@ -112,8 +114,8 @@ class KubernetesProvider(ExecutionProvider, RepresentationMixin):
             self.deployment_name = '{}-{}-deployment'.format(job_name,
                                                              str(time.time()).split('.')[0])
 
-            formatted_cmd = template_string.format(command=cmd_string,
-                                                   overrides=self.config["execution"]["block"]["options"].get("overrides", ''))
+            formatted_cmd = template_string.format(command=cmd_string, overrides=None)
+                                                  # overrides=self.config["execution"]["block"]["options"].get("overrides", ''))
 
             print("Creating replicas :", self.init_blocks)
             self.deployment_obj = self._create_deployment_object(job_name,
@@ -204,13 +206,15 @@ class KubernetesProvider(ExecutionProvider, RepresentationMixin):
         # sorry, quick hack that doesn't pass this stuff through to test it works.
         # TODO it also doesn't only add what is set :(
         security_context = None
-        if 'security' in self.config['execution']:
-            security_context = client.V1SecurityContext(run_as_group=self.group_id,
-                                                        run_as_user=self.user_id,
-                                                        run_as_non_root=self.run_as_non_root)
-            #                    self.user_id = None
-            #                    self.group_id = None
-            #                    self.run_as_non_root = None
+        #if 'security' in self.config['execution']:
+        try:
+            if self.user_id and self.group_id:
+                security_context = client.V1SecurityContext(run_as_group=self.group_id,
+                                                            run_as_user=self.user_id,
+                                                            run_as_non_root=self.run_as_non_root)
+        except:
+            pass
+
         # Create the enviornment variables and command to initiate IPP
         environment_vars = client.V1EnvVar(name="TEST", value="SOME DATA")
 
