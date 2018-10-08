@@ -6,6 +6,8 @@ logger = logging.getLogger(__name__)
 
 from libsubmit.error import *
 from libsubmit.providers.provider_base import ExecutionProvider
+from libsubmit.channels import LocalChannel
+from libsubmit.utils import RepresentationMixin
 
 try:
     from kubernetes import client, config
@@ -15,53 +17,78 @@ except (ImportError, NameError, FileNotFoundError):
     _kubernetes_enabled = False
 
 
-class KubernetesProvider(ExecutionProvider):
-    """ Kubernetes execution provider:
+class KubernetesProvider(ExecutionProvider, RepresentationMixin):
+    """ Kubernetes execution provider
 
-        TODO: put in a config
+    Parameters
+    ----------
+
+    namespace : str
+        Kubernetes namespace to create deployments.
+    image : str
+        Docker image to use in the deployment.
+    channel : Channel
+        Channel for accessing this provider. Possible channels include
+        :class:`~libsubmit.channels.LocalChannel` (the default),
+        :class:`~libsubmit.channels.SSHChannel`, or
+        :class:`~libsubmit.channels.SSHInteractiveLoginChannel`.
+    tasks_per_node : int
+        Tasks to run per node.
+    nodes_per_block : int
+        Nodes to provision per block.
+    init_blocks : int
+        Number of blocks to provision at the start of the run. Default is 1.
+    min_blocks : int
+        Minimum number of blocks to maintain.
+    max_blocks : int
+        Maximum number of blocks to maintain.
+    parallelism : float
+        Ratio of provisioned task slots to active tasks. A parallelism value of 1 represents aggressive
+        scaling where as many resources as possible are used; parallelism close to 0 represents
+        the opposite situation in which as few resources as possible (i.e., min_blocks) are used.
+    secret : str
+        Docker secret to use to pull images
+    user_id : str
+        Unix user id to run the container as.
+    group_id : str
+        Unix group id to run the container as.
+    run_as_non_root : bool
+        Run as non-root (True) or run as root (False).
     """
 
-    def __repr__(self):
-        return "<Kubernetes Execution Provider for site:{0}>".format(self.sitename)
-
-    def __init__(self, config, channel=None):
-        """ Initialize the Kubernetes execution provider class
-
-        Args:
-             - Config (dict): Dictionary with all the config options.
-
-        KWargs :
-             - channel (channel object) : default=None A channel object
-        """
-
-        self.channel = channel
-
+    def __init__(self,
+                 image,
+                 namespace='default',
+                 channel=LocalChannel(),
+                 tasks_per_node=1,
+                 nodes_per_block=1,
+                 init_blocks=4,
+                 min_blocks=0,
+                 max_blocks=10,
+                 parallelism=1,
+                 user_id=None,
+                 group_id=None,
+                 run_as_non_root=False,
+                 secret=None):
         if not _kubernetes_enabled:
             raise OptionalModuleMissing(['kubernetes'],
                                         "Kubernetes provider requires kubernetes module and config.")
 
+        self.namespace = namespace
+        self.image = image
+        self.channel = channel
+        self.tasks_per_node = tasks_per_node
+        self.nodes_per_block = nodes_per_block
+        self.init_blocks = init_blocks
+        self.min_blocks = min_blocks
+        self.max_blocks = max_blocks
+        self.parallelism = parallelism
+        self.secret = secret
+        self.user_id = user_id
+        self.group_id = group_id
+        self.run_as_non_root = run_as_non_root
+
         self.kube_client = client.ExtensionsV1beta1Api()
-
-        self.config = config
-        self.sitename = self.config['site']
-        self.namespace = self.config['execution']['namespace']
-        self.image = self.config['execution']['image']
-
-        self.init_blocks = self.config["execution"]["block"]["initBlocks"]
-        self.min_blocks = self.config["execution"]["block"]["minBlocks"]
-        self.max_blocks = self.config["execution"]["block"]["maxBlocks"]
-
-        self.user_id = None
-        self.group_id = None
-        self.run_as_non_root = None
-        if 'security' in self.config['execution']:
-            self.user_id = self.config["execution"]['security']["user_id"]
-            self.group_id = self.config["execution"]['security']["group_id"]
-            self.run_as_non_root = self.config["execution"]['security']["run_as_non_root"]
-
-        self.secret = None
-        if 'secret' in self.config['execution']:
-            self.secret = self.config['execution']['secret']
 
         # Dictionary that keeps track of jobs, keyed on job_id
         self.resources = {}
@@ -87,8 +114,8 @@ class KubernetesProvider(ExecutionProvider):
             self.deployment_name = '{}-{}-deployment'.format(job_name,
                                                              str(time.time()).split('.')[0])
 
-            formatted_cmd = template_string.format(command=cmd_string,
-                                                   overrides=self.config["execution"]["block"]["options"].get("overrides", ''))
+            formatted_cmd = template_string.format(command=cmd_string, overrides=None)
+                                                  # overrides=self.config["execution"]["block"]["options"].get("overrides", ''))
 
             print("Creating replicas :", self.init_blocks)
             self.deployment_obj = self._create_deployment_object(job_name,
@@ -179,13 +206,15 @@ class KubernetesProvider(ExecutionProvider):
         # sorry, quick hack that doesn't pass this stuff through to test it works.
         # TODO it also doesn't only add what is set :(
         security_context = None
-        if 'security' in self.config['execution']:
-            security_context = client.V1SecurityContext(run_as_group=self.group_id,
-                                                        run_as_user=self.user_id,
-                                                        run_as_non_root=self.run_as_non_root)
-            #                    self.user_id = None
-            #                    self.group_id = None
-            #                    self.run_as_non_root = None
+        #if 'security' in self.config['execution']:
+        try:
+            if self.user_id and self.group_id:
+                security_context = client.V1SecurityContext(run_as_group=self.group_id,
+                                                            run_as_user=self.user_id,
+                                                            run_as_non_root=self.run_as_non_root)
+        except:
+            pass
+
         # Create the enviornment variables and command to initiate IPP
         environment_vars = client.V1EnvVar(name="TEST", value="SOME DATA")
 
