@@ -1,3 +1,4 @@
+# -*- coding: future_fstrings -*-
 import json
 import logging
 import os
@@ -593,8 +594,8 @@ class AWSProvider(ExecutionProvider, RepresentationMixin):
         wrapped_cmd = self.launcher(command,
                                     self.tasks_per_node,
                                     self.nodes_per_block)
-        [instance, *rest] = self.spin_up_instance(command=wrapped_cmd, job_name=job_name)
-
+        instance_data = self.spin_up_instance(command=wrapped_cmd, job_name=job_name)
+        instance, rest = instance_data[0], instance_data[1:]
         if not instance:
             logger.error("Failed to submit request to EC2")
             return None

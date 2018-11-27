@@ -1,9 +1,11 @@
 from abc import ABCMeta, abstractmethod
+import six
 
 from libsubmit.utils import RepresentationMixin
 
 
-class Launcher(RepresentationMixin, metaclass=ABCMeta):
+@six.add_metaclass(ABCMeta)
+class Launcher(RepresentationMixin):
     """ Launcher base class to enforce launcher interface
     """
     @abstractmethod
