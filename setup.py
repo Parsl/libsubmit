@@ -4,11 +4,17 @@ with open('libsubmit/version.py') as f:
     exec(f.read())
 
 install_requires = [
-    'paramiko'
+    'paramiko',
+    'six',
+    'configparser',
+    'future-fstrings',
     ]
 
 tests_require = [
     'paramiko',
+    'six',
+    'configparser',
+    'future-fstrings',
     'mock>=1.0.0',
     'nose',
     'pytest'
