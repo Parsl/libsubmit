@@ -83,7 +83,7 @@ class TorqueProvider(ClusterProvider, RepresentationMixin):
                  parallelism=1,
                  launcher=AprunLauncher(),
                  walltime="00:20:00"):
-        super().__init__(label,
+        super(TorqueProvider, self).__init__(label,
                          channel,
                          script_dir,
                          nodes_per_block,
