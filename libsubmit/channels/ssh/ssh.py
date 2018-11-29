@@ -257,7 +257,6 @@ class SSHChannel(RepresentationMixin):
             except:
                 self.sftp_client.mkdir(dir_)
 
-
     def push_directory(self, local_source, remote_dir):
         ''' Recursively transport directory on the remote side to a local directory
 
@@ -274,7 +273,28 @@ class SSHChannel(RepresentationMixin):
             - FileCopyException : FileCopy failed.
         '''
 
-        raise NotImplementedError
+        try:
+            if os.path.isdir(local_source):
+                _, directory_name = os.path.split(local_source)
+                dest = remote_dir + '/' + directory_name
+
+                try:
+                    self.sftp_client.stat(directory_name)
+                except:
+                    self.sftp_client.mkdir(directory_name)
+
+                file_list = os.listdir(directory_name)
+                for filename in file_list:
+                    src = os.path.join(local_source, filename)
+                    self.push_directory( src, dest )
+            else:
+                self.push_file(local_source, remote_dir)
+
+        except Exception as e:
+            logger.exception("Directory push failed")
+            raise FileCopyException(e, self.hostname)
+
+        return remote_dir
 
     def pull_directory(self, remote_source, local_dir):
         ''' Recursively transport directory on the remote side to a local directory
@@ -296,19 +316,15 @@ class SSHChannel(RepresentationMixin):
             if S_ISDIR( self.sftp_client.stat(remote_source).st_mode ):
                 _, directory_name = os.path.split(remote_source)
                 dest = os.path.join(local_dir, directory_name)
-
-                try:
+                
+                if not os.path.exists(directory_name):
                     os.makedirs(directory_name)
-                except OSError as e:
-                    if e.errno != errno.EEXIST:
-                        logger.exception("Failed to create script_dir: {0}".format(script_dir))
-                    raise BadScriptPath(e, self.hostname)
                 
                 file_list = self.sftp_client.listdir(path=remote_source)
                 for filename in file_list:
                     src = remote_source + '/' + filename
                     self.pull_directory( src, dest )
-            else :
+            else:
                 self.pull_file(remote_source,local_dir)
                 
         except Exception as e:
@@ -316,3 +332,4 @@ class SSHChannel(RepresentationMixin):
             raise FileCopyException(e, self.hostname)
 
         return local_dir
+
