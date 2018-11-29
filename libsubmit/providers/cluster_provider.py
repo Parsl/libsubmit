@@ -113,8 +113,9 @@ class ClusterProvider(ExecutionProvider):
 
         try:
             submit_script = Template(template).substitute(jobname=job_name, **configs)
+            submit_script = submit_script.replace("\r\n", "\n")
             # submit_script = Template(template).safe_substitute(jobname=job_name, **configs)
-            with open(script_filename, 'w') as f:
+            with open(script_filename, 'wb') as f:
                 f.write(submit_script)
 
         except KeyError as e:
