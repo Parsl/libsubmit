@@ -20,11 +20,13 @@ to a variety of compute resources.
    :alt: Documentation Status
 
 
-.. note::
-   As of December 20th, (Parsl v0.7.0) the libsubmit repository has been merged into Parsl
-   to reduce overheads on maintenance with respect to documentation, testing, and release
-   synchronization. The components offered by libsubmit are now available in Parsl as:
-   `parsl.channels`, `parsl.launchers` and `parsl.providers`.
+Note
+^^^^
+
+As of December 20th, (Parsl v0.7.0) the libsubmit repository has been merged into Parsl
+to reduce overheads on maintenance with respect to documentation, testing, and release
+synchronization. The components offered by libsubmit are now available in Parsl as:
+`parsl.channels`, `parsl.launchers` and `parsl.providers`.
 
 
 Documentation
