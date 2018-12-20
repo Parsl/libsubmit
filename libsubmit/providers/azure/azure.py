@@ -104,7 +104,7 @@ class AzureProvider(ExecutionProvider, RepresentationMixin):
                 state_file = '.azure_{}.json'.format(self.label)
             self.read_state_file(state_file)
 
-        except Exception as e:
+        except Exception:
             self.create_vpc().id
             logger.info("No State File. Cannot load previous options. Creating new infrastructure.")
             self.write_state_file()
