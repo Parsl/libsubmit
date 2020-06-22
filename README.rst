@@ -23,7 +23,7 @@ to a variety of compute resources.
 Note
 ^^^^
 
-As of December 20th, (Parsl v0.7.0) the libsubmit repository has been merged into Parsl
+As of December 20th 2018, (Parsl v0.7.0) the libsubmit repository has been merged into Parsl
 to reduce overheads on maintenance with respect to documentation, testing, and release
 synchronization. The components offered by libsubmit are now available in Parsl as:
 `parsl.channels`, `parsl.launchers` and `parsl.providers`.
