@@ -202,7 +202,7 @@ class SSHChannel(RepresentationMixin):
             - FileCopyException : FileCopy failed.
         '''
 
-        local_dest = local_dir + '/' + os.path.basename(remote_source)
+        local_dest = os.path.join(local_dir, os.path.basename(remote_source))
 
         try:
             os.makedirs(local_dir)
