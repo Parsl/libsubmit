@@ -1,3 +1,4 @@
+# -*- coding: future_fstrings -*-
 import logging
 import os
 import time
@@ -83,7 +84,7 @@ class SlurmProvider(ClusterProvider, RepresentationMixin):
                  overrides='',
                  cmd_timeout=10,
                  launcher=SingleNodeLauncher()):
-        super().__init__(label,
+        super(SlurmProvider, self).__init__(label,
                          channel,
                          script_dir,
                          nodes_per_block,
@@ -110,7 +111,7 @@ class SlurmProvider(ClusterProvider, RepresentationMixin):
         job_id_list = ','.join(self.resources.keys())
         cmd = "squeue --job {0}".format(job_id_list)
 
-        retcode, stdout, stderr = super().execute_wait(cmd)
+        retcode, stdout, stderr = super(SlurmProvider, self).execute_wait(cmd)
 
         # Execute_wait failed. Do no update
         if retcode != 0:
@@ -179,7 +180,7 @@ class SlurmProvider(ClusterProvider, RepresentationMixin):
 
         channel_script_path = self.channel.push_file(script_path, self.channel.script_dir)
 
-        retcode, stdout, stderr = super().execute_wait("sbatch {0}".format(channel_script_path))
+        retcode, stdout, stderr = super(SlurmProvider, self).execute_wait("sbatch {0}".format(channel_script_path))
 
         job_id = None
         if retcode == 0:
@@ -203,7 +204,7 @@ class SlurmProvider(ClusterProvider, RepresentationMixin):
         '''
 
         job_id_list = ' '.join(job_ids)
-        retcode, stdout, stderr = super().execute_wait("scancel {0}".format(job_id_list))
+        retcode, stdout, stderr = super(SlurmProvider, self).execute_wait("scancel {0}".format(job_id_list))
         rets = None
         if retcode == 0:
             for jid in job_ids:

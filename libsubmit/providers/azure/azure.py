@@ -131,7 +131,8 @@ class AzureProvider(ExecutionProvider, RepresentationMixin):
         """
 
         job_name = "parsl.auto.{0}".format(time.time())
-        [instance, *rest] = self.deployer.deploy(command=command, job_name=job_name, blocksize=1)
+        instance_data = self.deployer.deploy(command=command, job_name=job_name, blocksize=1)
+        instance, rest = instance_data[0], instance_data[1:]
 
         if not instance:
             logger.error("Failed to submit request to Azure")

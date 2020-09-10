@@ -82,7 +82,7 @@ class CondorProvider(RepresentationMixin, ClusterProvider):
                  launcher=SingleNodeLauncher(),
                  requirements=''):
 
-        super().__init__(label,
+        super(CondorProvider, self).__init__(label,
                          channel,
                          script_dir,
                          nodes_per_block,
@@ -115,7 +115,7 @@ class CondorProvider(RepresentationMixin, ClusterProvider):
 
         job_id_list = ' '.join(self.resources.keys())
         cmd = "condor_q {0} -af:jr JobStatus".format(job_id_list)
-        retcode, stdout, stderr = super().execute_wait(cmd)
+        retcode, stdout, stderr = super(CondorProvider, self).execute_wait(cmd)
         """
         Example output:
 
@@ -230,7 +230,7 @@ class CondorProvider(RepresentationMixin, ClusterProvider):
         channel_script_path = self.channel.push_file(script_path, self.channel.script_dir)
 
         cmd = "condor_submit {0}".format(channel_script_path)
-        retcode, stdout, stderr = super().execute_wait(cmd, 3)
+        retcode, stdout, stderr = super(CondorProvider, self).execute_wait(cmd, 3)
         logger.debug("Retcode:%s STDOUT:%s STDERR:%s", retcode, stdout.strip(), stderr.strip())
 
         job_id = []

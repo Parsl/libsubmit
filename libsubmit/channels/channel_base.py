@@ -1,7 +1,8 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
+import six
 
-
-class Channel(metaclass=ABCMeta):
+@six.add_metaclass(ABCMeta)
+class Channel():
     """ Define the interface to all channels. Channels are usually called via the execute_wait function.
     For channels that execute remotely, a push_file function allows you to copy over files.
 

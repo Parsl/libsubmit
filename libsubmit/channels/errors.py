@@ -25,7 +25,7 @@ class BadHostKeyException(ChannelError):
     '''
 
     def __init__(self, e, hostname):
-        super().__init__()
+        super(BadHostKeyException, self).__init__()
         self.reason = "SSH channel could not be created since server's host keys could not be verified"
         self.hostname = hostname
         self.e = e
@@ -41,7 +41,7 @@ class BadScriptPath(ChannelError):
     '''
 
     def __init__(self, e, hostname):
-        super().__init__()
+        super(BadScriptPath, self).__init__()
         self.reason = "Inaccessible remote script dir. Specify script_dir"
         self.hostname = hostname
         self.e = e
@@ -57,7 +57,7 @@ class BadPermsScriptPath(ChannelError):
     '''
 
     def __init__(self, e, hostname):
-        super().__init__()
+        super(BadPermsScriptPath, self).__init__()
         self.reason = "User does not have permissions to access the script_dir"
         self.hostname = hostname
         self.e = e
@@ -74,7 +74,7 @@ class FileExists(ChannelError):
     '''
 
     def __init__(self, e, hostname, filename=None):
-        super().__init__()
+        super(FileExists, self).__init__()
         self.reason = "File name collision in channel transport phase:" + filename
         self.hostname = hostname
         self.e = e
@@ -90,7 +90,7 @@ class AuthException(ChannelError):
     '''
 
     def __init__(self, e, hostname):
-        super().__init__()
+        super(AuthException, self).__init__()
         self.reason = "Authentication to remote server failed"
         self.hostname = hostname
         self.e = e
@@ -106,7 +106,7 @@ class SSHException(ChannelError):
     '''
 
     def __init__(self, e, hostname):
-        super().__init__()
+        super(SSHException, self).__init__()
         self.reason = "Error connecting or establishing an SSH session"
         self.hostname = hostname
         self.e = e
@@ -122,7 +122,7 @@ class FileCopyException(ChannelError):
     '''
 
     def __init__(self, e, hostname):
-        super().__init__()
+        super(FileCopyException, self).__init__()
         self.reason = "File copy failed due to {0}".format(e)
         self.hostname = hostname
         self.e = e

@@ -1,7 +1,9 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
+import six
 
 
-class ExecutionProvider(metaclass=ABCMeta):
+@six.add_metaclass(ABCMeta)
+class ExecutionProvider():
     """ Define the strict interface for all Execution Provider
 
     .. code:: python

@@ -4,11 +4,17 @@ with open('libsubmit/version.py') as f:
     exec(f.read())
 
 install_requires = [
-    'paramiko'
+    'paramiko',
+    'six',
+    'configparser',
+    'future-fstrings',
     ]
 
 tests_require = [
     'paramiko',
+    'six',
+    'configparser',
+    'future-fstrings',
     'mock>=1.0.0',
     'nose',
     'pytest'
@@ -40,6 +46,7 @@ setup(
         # Licence, must match with licence above
         'License :: OSI Approved :: Apache Software License',
         # Python versions supported
+        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
     ],

@@ -7,6 +7,12 @@ logger = logging.getLogger(__name__)
 from libsubmit.error import *
 from libsubmit.providers.provider_base import ExecutionProvider
 
+# Compatibility with python2.7, FileNotFoundError is not defined
+try:
+    FileNotFoundError
+except NameError:
+    FileNotFoundError = IOError
+
 try:
     from kubernetes import client, config
     config.load_kube_config()
